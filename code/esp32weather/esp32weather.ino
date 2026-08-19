@@ -9,10 +9,10 @@
 #include "ui.h"                
 
 // --- Cấu hình WiFi & API ---
-const char* ssid     = "TDLOGY";         // Điền tên WiFi
-const char* password = "lktd@12346";         // Điền mật khẩu WiFi
+const char* ssid     = "";         // Điền tên WiFi
+const char* password = "";         // Điền mật khẩu WiFi
 const long timeZone  = 7 * 3600;       
-const String apiKey  = "26919dc0dcf7e7c97841a79387f6560a";         // Điền API Key của OpenWeatherMap
+const String apiKey  = "";         // Điền API Key của OpenWeatherMap
 const String city    = "Ho Chi Minh";  // Tên thành phố
 
 // --- Cấu hình chân màn hình (Adafruit_ST7735, Software SPI) ---
@@ -105,7 +105,6 @@ String urlEncode(const String &str) {
   return encoded;
 }
 
-// Chuyển tiếng Việt có dấu -> không dấu
 String removeVietnameseTones(String str) {
   const char* utf8Chars[] = {
     "à","á","ạ","ả","ã","â","ầ","ấ","ậ","ẩ","ẫ","ă","ằ","ắ","ặ","ẳ","ẵ",
@@ -178,6 +177,7 @@ void getWeather() {
       if (desc.length() > 0) desc[0] = toupper(desc[0]);
       Serial.println("[Weather] Cap nhat OK: " + cond + " / " + desc + " / " + String(temp) + "C");
 
+      // Gán dữ liệu vào các nhãn (Label) bạn đã tạo trong SquareLine
       lv_label_set_text(ui_tempvalue, (String(temp, 0)).c_str());
       lv_label_set_text(ui_humdivalue, (String(hum) + "%").c_str());
       lv_label_set_text(ui_windvalue, (String(wind, 1)).c_str());
@@ -199,7 +199,7 @@ void getWeather() {
 
 void setup() {
   Serial.begin(115200);
-  delay(2000);
+  delay(2000); // Đợi Serial Monitor ổn định
 
   Serial.println("--- BAT DAU SETUP ---");
 
@@ -207,9 +207,9 @@ void setup() {
   digitalWrite(TFT_LED, HIGH);
 
   Serial.println("1. Khoi tao TFT...");
-  
+  // initR: loại tab của ST7735 128x128 tương ứng ST7735_GREENTAB128 bên TFT_eSPI
   tft.initR(INITR_144GREENTAB);
-  tft.setRotation(3);
+  tft.setRotation(2);
   tft.fillScreen(ST77XX_BLACK);
   Serial.println("   TFT OK");
 
@@ -227,7 +227,12 @@ void setup() {
 
   Serial.println("3. Khoi tao giao dien SquareLine...");
   ui_init();
-    // Ẩn hết icon thời tiết ngay từ đầu - tránh hiện chồng lên nhau
+
+  lv_obj_invalidate(lv_scr_act());
+  for (int i = 0; i < 20; i++) { lv_timer_handler(); delay(10); }
+  delay(4000);
+
+  // Ẩn hết icon thời tiết ngay từ đầu - tránh hiện chồng lên nhau
   // trong lúc chưa có dữ liệu API (mặc định SquareLine không tự ẩn)
   lv_obj_add_flag(ui_clearsky, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_cloudy, LV_OBJ_FLAG_HIDDEN);
@@ -236,9 +241,6 @@ void setup() {
   lv_obj_add_flag(ui_storm, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_night, LV_OBJ_FLAG_HIDDEN);
   lv_obj_clear_flag(ui_cloudy, LV_OBJ_FLAG_HIDDEN); // hiện tạm 1 icon mặc định trong lúc chờ API
-
-  lv_obj_invalidate(lv_scr_act());
-  for (int i = 0; i < 20; i++) { lv_timer_handler(); delay(10); }
 
   Serial.println("4. Ket noi WiFi...");
   WiFi.begin(ssid, password);
@@ -276,7 +278,7 @@ void loop() {
   lv_timer_handler();
   delay(5);
 
-  // Cập nhật thời gian (timeout ngắn 5ms để không làm treo lv_timer_handler)
+  // Cập nhật thời gian 
   struct tm ti;
   bool timeOk = getLocalTime(&ti, 5);
 
